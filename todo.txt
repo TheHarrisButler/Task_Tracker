@@ -1,0 +1,189 @@
+#! /bin/bash
+
+#Harris Butler
+#COSC 4327
+#001
+#11/21/2019
+#This is a script to manage your task's
+#You can add, remove, get, and print your task
+
+# splash screen
+clear
+echo "      ========================================================="
+echo "      =====                                               ====="
+echo "      =====                                               ====="
+echo "      =====        ++++++     ++++      +++    ++++       ====="
+echo "      =====        ++  ++    +    +     + +   +    +      ====="
+echo "      =====         +  +     +    +  ++++ +   +    +      ====="
+echo "      =====         +  +     +    +  +    +   +    +      ====="
+echo "      =====         ++++      ++++   ++++++    ++++       ====="
+echo "      =====                                               ====="
+echo "      =====                                               ====="
+echo "      ========================================================="
+
+input=""
+inputfilename=""
+filename=""
+menuinput="" 
+flag=true
+flag2=true
+flag3=true
+filename=""
+numberoffiles=1
+
+#user must hit the enter key to continue
+while $flag; do
+	echo "                    Hit the enter key to continue." 
+	read input
+
+	if [ "$input" == "" ]
+	then
+		flag=false
+		clear
+	else
+		flag=true
+	fi 
+done
+
+#check for arguments
+if [ "$1" == "" ]
+then
+	while $flag2; do
+		echo "Please enter a name for the task file."
+		read inputfilename
+		
+		if [ "$inputfilename" != "" ]
+		then
+			> $inputfilename.todo
+			flag2=false
+			filename="$inputfilename.todo"
+		else
+			flag=true
+		fi 
+	done
+elif [ "$1" != "" ]
+then
+	if [ ! -f "$1.todo" ]
+	then
+		> $1.todo
+		filename="$1.todo"
+
+	#collect the number of already existing task in the file
+	else
+		filename="$1.todo"
+		typeset -i lines
+		lines=`wc -l < $1.todo`
+		numberoffiles=`sed -n "${lines}p" $1.todo`
+		sed -e "${lines}d" $1.todo > temp.txt
+		mv temp.txt $1.todo
+	fi
+else
+	echo ""
+fi
+
+#main menu
+while $flag3; do
+	clear
+	echo "Enter the number corresponding to the action you wish to perform."
+	echo " "
+	echo "1. Add"
+	echo "2. Get"
+	echo "3. Remove"
+	echo "4. Print"
+	echo "5. Exit"
+	read menuinput
+	
+	if [ "$menuinput" == "1" ]
+	then
+		thedate=""
+		task=""
+		echo "Enter the date"
+		read thedate
+		echo "Enter the task"
+		read task
+		echo -e "$numberoffiles. \033[1m$thedate\033[0m - $task"  >> $filename
+		numberoffiles=$((numberoffiles+1))
+	elif [ "$menuinput" == "2" ]
+	then
+		linenumber=
+		contInput=
+		echo "Enter the line number that you want to return."
+		read linenumber
+		if [ "$linenumber" -gt "$numberoffiles" ]
+		then
+			echo "Not a valid line number"
+		else
+			clear
+			echo ""
+			sed -n "${linenumber}p" $filename
+			echo ""
+		fi
+ 
+		read -p "Hit the enter key to continue." contInput
+	elif [ "$menuinput" == "3" ]
+	then
+		removeline=
+		contInput2=
+		echo "Enter the line number that you want to remove."
+		read removeline
+		if [ "$removeline" -gt "$numberoffiles" ]
+		then
+			echo "Not a valid line number"
+		elif  [ "$removeline" == "0" ]
+		then
+			echo ""
+		else	
+			changeLineNumber=0
+			touch Tp.todo
+			sed -e "${removeline}d" $1.todo >> Tp.todo
+			touch Tp1.todo
+			while IFS= read -r line
+			do 
+				length=$(echo -n $line| wc -m)
+				typeset -i currentLineNumber
+				currentLineNumber=${line:0:1}
+
+				if [ "$removeline" -lt "$currentLineNumber" ]
+				then
+					line=${line:1:length}
+					currentLineNumber=$((currentLineNumber-1))
+					line="$currentLineNumber$line"
+				fi
+				echo "$line" >> Tp1.todo	
+			done < Tp.todo
+			mv Tp1.todo Tp.todo
+			mv Tp.todo $filename
+			echo ""
+			echo "Task $removeline has been removed from your task list."
+			echo ""
+			numberoffiles=$((numberoffiles-1))
+			read -p "Hit the enter key to continue." contInput2
+		fi
+	elif [ "$menuinput" == "4" ]
+	then
+		contInput3=
+		echo ""
+		cat $filename
+		echo ""
+		read -p "Hit the enter key to continue." contInput3
+		echo ""
+	elif [ "$menuinput" == "5" ]
+	then
+		echo "$numberoffiles" >> $filename
+		printtask=`expr $numberoffiles - 1`
+		echo ""
+		echo "There are $printtask task in your task list" 
+		echo ""
+		sleep 5
+		exit 1
+	fi 
+done
+
+
+
+
+
+
+
+
+
